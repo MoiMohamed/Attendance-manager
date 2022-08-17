@@ -130,24 +130,12 @@ class Auth with ChangeNotifier {
     var userId;
     var token;
 
-    SecureData.then((value) {
-      expiry = value["expiryDate"];
-    });
-
-    SecureData.then((value) {
-      email = value["email"];
-    });
-
-    SecureData.then((value) {
-      password = value["password"];
-    });
-
-    SecureData.then((value) {
-      userId = value["userId"];
-    });
-
-    SecureData.then((value) {
-      token = value["token"];
+    SecureData.then((UserData) {
+      expiry = UserData["expiryDate"];
+      email = UserData["email"];
+      password = UserData["password"];
+      userId = UserData["userId"];
+      token = UserData["token"];
     });
 
     if (expiry.isBefore(DateTime.now())) {
