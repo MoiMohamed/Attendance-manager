@@ -89,11 +89,11 @@ class Auth with ChangeNotifier {
     }
   }
 
-  Future<void> login(String email, String password) async {
+  void login(String email, String password) {
     authenthicate("signInWithPassword", email, password);
   }
 
-  Future<void> signup(String email, String password, String name) {
+  void signup(String email, String password, String name) {
     authenthicate("signUp", email, password, name: name);
   }
 
