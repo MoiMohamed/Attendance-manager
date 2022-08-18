@@ -8,7 +8,7 @@ class Session {
   String id;
   DateTime date;
   String class_;
-  List<Map<String, int>> students;
+  Map<String, bool> students;
 
   Session(
       {@required this.id,
@@ -62,9 +62,9 @@ class Sessions with ChangeNotifier {
       final responseClass = await http.get(url2);
       final data = json.decode(responseClass.body);
 
-      List<Map<String, int>> students;
+      Map<String, bool> students;
 
-      data.forEach((key, value) => students.insert(0, {key: 0}));
+      data.forEach((key, value) => students[key] = false);
 
       final response = await http.post(url,
           body: json.encode({
@@ -74,11 +74,10 @@ class Sessions with ChangeNotifier {
           }));
 
       _sessions.add(Session(
-        id: json.decode(response.body)["name"],
-        class_: class_,
-        date: date,
-        students: students
-      ));
+          id: json.decode(response.body)["name"],
+          class_: class_,
+          date: date,
+          students: students));
     } catch (e) {
       throw e;
     }
@@ -86,23 +85,50 @@ class Sessions with ChangeNotifier {
     notifyListeners();
   }
 
-
-  Future<void> deleteSession(String id) async{
+  Future<void> checkAttendance(String sessionId, String studentId) async {
     final url = Uri.parse(
-        "https://attendance-manager-b9d3f-default-rtdb.europe-west1.firebasedatabase.app/sessions/$_userId/$id.json");
+        "https://attendance-manager-b9d3f-default-rtdb.europe-west1.firebasedatabase.app/sessions/$_userId/$sessionId.json");
+
+    final editedSession = _sessions.firstWhere((session) => session.id == sessionId);
+    editedSession.students[studentId] = !editedSession.students[studentId];
 
     try{
-      final response = await http.delete(url);
+      final response = await http.patch(url, body: json.encode({
+        "class": editedSession.class_,
+        "date": editedSession.date.toIso8601String(),
+        "students": editedSession.students
+      }));
 
       if(response.statusCode >= 400)
       {
+        HttpException(response.statusCode.toString());
+      }
+
+      final sessionsIndex = _sessions.indexWhere((session) => session.id == sessionId);
+      _sessions[sessionsIndex] = editedSession;
+      
+    }
+    catch(e)
+    {
+      throw e;
+    }
+
+    notifyListeners();
+  }
+
+  Future<void> deleteSession(String id) async {
+    final url = Uri.parse(
+        "https://attendance-manager-b9d3f-default-rtdb.europe-west1.firebasedatabase.app/sessions/$_userId/$id.json");
+
+    try {
+      final response = await http.delete(url);
+
+      if (response.statusCode >= 400) {
         throw HttpException(response.statusCode.toString());
       }
 
       _sessions.removeWhere((session) => session.id == id);
-    }
-    catch(e)
-    {
+    } catch (e) {
       throw e;
     }
   }
